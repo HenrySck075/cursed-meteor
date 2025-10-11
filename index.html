@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinates Dialog</title>
+    
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@material/web@1.0.0/all.js"></script>
+
+    <style>
+        .input-group {
+            display: flex;
+            gap: 16px; /* Material Design spacing */
+            margin-bottom: 16px;
+        }
+
+        .input-group.tile-inputs md-outlined-text-field {
+            flex: 1 1 25%; /* Four inputs, flexible width */
+        }
+        
+        .input-group.coord-inputs {
+            /* Set a minimum width for the container for the mobile breakpoint request */
+            min-width: 320px; /* Common minimum mobile screen width */
+            max-width: 100%;
+        }
+
+        .input-group.coord-inputs md-outlined-text-field {
+            flex: 1 1 50%; /* Two inputs, flexible width */
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--md-sys-color-outline-variant, #c2c7c5);
+            margin: 20px 0;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            padding-top: 8px; /* Spacing above the button */
+        }
+
+        body {
+            background-color: transparent;
+       }
+    </style>
+</head>
+<body>
+
+    <md-filled-button id="open-dialog-button">Open Coordinate Dialog</md-filled-button>
+
+    <md-dialog id="coordinate-dialog">
+        <div slot="headline">Coordinate Converter</div>
+        
+        <div slot="content">
+            <div class="input-group tile-inputs">
+                <md-outlined-text-field 
+                    id="tile-x" 
+                    label="Tile X" 
+                    type="number" 
+                    value="0"
+                    min="0">
+                </md-outlined-text-field>
+                <md-outlined-text-field 
+                    id="tile-y" 
+                    label="Tile Y" 
+                    type="number" 
+                    value="0"
+                    min="0">
+                </md-outlined-text-field>
+                <md-outlined-text-field 
+                    id="pixel-x" 
+                    label="Pixel X" 
+                    type="number" 
+                    value="0"
+                    min="0">
+                </md-outlined-text-field>
+                <md-outlined-text-field 
+                    id="pixel-y" 
+                    label="Pixel Y" 
+                    type="number" 
+                    value="0"
+                    min="0">
+                </md-outlined-text-field>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="input-group coord-inputs">
+                <md-outlined-text-field 
+                    id="latitude" 
+                    label="Latitude" 
+                    type="number" 
+                    value="0">
+                </md-outlined-text-field>
+                <md-outlined-text-field 
+                    id="longitude" 
+                    label="Longitude" 
+                    type="number" 
+                    value="0">
+                </md-outlined-text-field>
+            </div>
+
+            <div class="button-container" slot="actions">
+                <md-filled-button id="teleport-button" disabled>Teleport</md-filled-button>
+            </div>
+
+        </div>
+    </md-dialog>
+
+    <script>
+        const dialog = document.getElementById('coordinate-dialog');
+        const openButton = document.getElementById('open-dialog-button');
+        const teleportButton = document.getElementById('teleport-button');
+
+        const inputs = {
+            tileX: document.getElementById('tile-x'),
+            tileY: document.getElementById('tile-y'),
+            pixelX: document.getElementById('pixel-x'),
+            pixelY: document.getElementById('pixel-y'),
+            latitude: document.getElementById('latitude'),
+            longitude: document.getElementById('longitude')
+        };
+
+        // Function to check if the page is running inside an iframe
+        function isInIframe() {
+            try {
+                return window.self !== window.top;
+            } catch (e) {
+                return true; // Assume in iframe if cross-origin access fails
+            }
+        }
+
+        // Initialize button state
+        teleportButton.disabled = !isInIframe();
+
+        // Conversion logic (simplified mock-up for demonstration)
+        function convertCoords() {
+            // Get current values as numbers (or 0 if empty/invalid)
+            const tx = parseFloat(inputs.tileX.value) || 0;
+            const ty = parseFloat(inputs.tileY.value) || 0;
+            const px = parseFloat(inputs.pixelX.value) || 0;
+            const py = parseFloat(inputs.pixelY.value) || 0;
+            const lat = parseFloat(inputs.latitude.value) || 0;
+            const lon = parseFloat(inputs.longitude.value) || 0;
+
+            // Simple conversion logic: e.g., Tile/Pixel to Lat/Lon
+            // NOTE: Replace this with your actual conversion formula
+            const newLat = (tx + px / 256) * 10 - 50; 
+            const newLon = (ty + py / 256) * 20 + 10;
+            
+            // Simple conversion logic: e.g., Lat/Lon to Tile/Pixel
+            // NOTE: Replace this with your actual reverse conversion formula
+            const newTileX = Math.floor((lat + 50) / 10);
+            const newPixelX = Math.round(((lat + 50) / 10 - newTileX) * 256);
+            
+            // Determine which set of inputs triggered the change
+            const activeElement = document.activeElement;
+            const isCoordInput = activeElement === inputs.latitude || activeElement === inputs.longitude;
+
+            if (isCoordInput) {
+                // Update Tile/Pixel inputs based on Lat/Lon
+                inputs.tileX.value = newTileX.toFixed(0);
+                inputs.tileY.value = newTileX.toFixed(0); // Placeholder
+                inputs.pixelX.value = newPixelX.toFixed(0);
+                inputs.pixelY.value = newPixelX.toFixed(0); // Placeholder
+            } else {
+                // Update Lat/Lon inputs based on Tile/Pixel
+                inputs.latitude.value = newLat.toFixed(4);
+                inputs.longitude.value = newLon.toFixed(4);
+            }
+        }
+
+        // Add event listeners to all numerical inputs for live conversion
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', convertCoords);
+            // Initialize with default values (which are "0" as per the HTML)
+            convertCoords();
+        });
+
+        // Teleport button click logic
+        teleportButton.addEventListener('click', () => {
+            const latitudeValue = parseFloat(inputs.latitude.value);
+            const longitudeValue = parseFloat(inputs.longitude.value);
+
+            // This is where you would "do smth with it"
+            console.log(`Teleporting to Latitude: ${latitudeValue}, Longitude: ${longitudeValue}`);
+            alert(`Teleport clicked! Lat: ${latitudeValue.toFixed(4)}, Lon: ${longitudeValue.toFixed(4)}`);
+            
+            // Optionally close the dialog after action
+            dialog.close();
+        });
+
+        // Open dialog button for demonstration
+        openButton.addEventListener('click', () => {
+            dialog.show();
+        });
+    </script>
+</body>
+</html>
