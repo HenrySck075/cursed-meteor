@@ -6,17 +6,8 @@
     <title>Coordinates Dialog</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <script type="importmap">
-      {
-        "imports": {
-          "mdui/": "https://esm.run/mdui@2.1.4/"
-        }
-      }
-    </script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdui@2.1.4/mdui.min.css">
-    <script type="module">
-      import 'mdui/mdui.js';
-    </script>
+    <link rel="stylesheet" href="https://unpkg.com/mdui@2.1.4/mdui.css">
+    <script src="https://unpkg.com/mdui@2.1.4/mdui.global.js"></script>
     <style>
         .input-group {
             display: flex;
@@ -24,7 +15,7 @@
             margin-bottom: 16px;
         }
 
-        .input-group.tile-inputs mdui-outlined-text-field {
+        .input-group.tile-inputs mdui-text-field {
             flex: 1 1 25%; /* Four inputs, flexible width */
         }
         
@@ -34,8 +25,7 @@
             max-width: 100%;
         }
 
-        .input-group.coord-inputs mdui-outlined-text-field {
-            flex: 1 1 50%; /* Two inputs, flexible width */
+        .input-group.coord-inputs mdui-text-field {
         }
 
         .divider {
@@ -50,82 +40,118 @@
             padding-top: 8px; /* Spacing above the button */
         }
 
-        body {
-            background-color: transparent;
-       }
+        html, body {
+            background-color: transparent !important;
+        }
     </style>
 </head>
 <body>
     <mdui-snackbar id="copy-text">Copied to clipboard</mdui-snackbar>
-    <div id="vanish-on-iframe">    
+    <div class="vanish-on-iframe">  
       <mdui-button id="open-dialog-button">Open Coordinate Dialog</mdui-button>
+      <p>Copy this to get the dialog injected:</p>
+      <mdui-button-icon icon="copy" id="copy-j"></mdui-button-icon>
+      <!--a codeblock-->
+      <code id="balls">
+        const domain="https://henrysck075.github.io";
+        <!--Add a fullscreen iframe that points to https://henrysck075.github.io/cursed-meteor/ with bg transparency on top but immediately hides it-->
+        const iframe=document.createElement("iframe");iframe.src=domain+"/cursed-meteor/";iframe.style.cssText="position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:9999;background-color:transparent";document.body.appendChild(iframe);
+        iframe.onload=()=&gt;{
+        const exploreBtn=document.querySelector("body&gt;div&gt;div.disable-pinch-zoom.relative.h-full.overflow-hidden&gt;div.absolute.right-2.top-2.z-30&gt;div&gt;div&gt;button[title=Explore]");const coordDialogBtn=exploreBtn.cloneNode();coordDialogBtn.title="C";exploreBtn.parentElement.appendChild(coordDialogBtn);
+        coordDialogBtn.onclick=()=&gt;{iframe.style.display="block";iframe.contentWindow.postMessage({type:"spawn"},domain);};
+        window.addEventListener("message",(e)=&gt;{
+        if(e.origin!==domain)return;
+        if(e.data.type=="close"){iframe.style.display="none";return;}
+        const loc=JSON.parse(localStorage.getItem("location"));
+        if(e.data.type=="loc"){loc.type="loc";iframe.contentWindow.postMessage(loc,domain);return;};
+        for(const key in e.data){loc[key]=e.data[key];}localStorage.setItem("location",JSON.stringify(loc));location.reload();
+        });
+        setTimeout(()=&gt;{iframe.style.display="none";},50);
+        }; 
+      </code>
     </div>
 
-    <mdui-dialog id="coordinate-dialog">
-        <div slot="headline">Coordinate Converter</div>
-        
-        <div slot="content">
-            <div class="input-group tile-inputs">
-                <mdui-text-field variant="outlined" 
-                    id="tile-x" 
-                    label="Tile X" 
-                    type="number" 
-                    value="0"
-                    min="0">
-                </mdui-outlined-text-field>
-                <mdui-text-field variant="outlined" 
-                    id="tile-y" 
-                    label="Tile Y" 
-                    type="number" 
-                    value="0"
-                    min="0">
-                </mdui-outlined-text-field>
-                <mdui-text-field variant="outlined" 
-                    id="pixel-x" 
-                    label="Pixel X" 
-                    type="number" 
-                    value="0"
-                    min="0">
-                </mdui-outlined-text-field>
-                <mdui-text-field variant="outlined" 
-                    id="pixel-y" 
-                    label="Pixel Y" 
-                    type="number" 
-                    value="0"
-                    min="0">
-                </mdui-outlined-text-field>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="input-group coord-inputs">
-                <mdui-text-field variant="outlined" 
-                    id="latitude" 
-                    label="Latitude" 
-                    type="number" 
-                    value="0">
-                </mdui-outlined-text-field>
-                <mdui-text-field variant="outlined" 
-                    id="longitude" 
-                    label="Longitude" 
-                    type="number" 
-                    value="0">
-                </mdui-outlined-text-field>
-            </div>
-
-            <div class="button-container" slot="actions">
-                <mdui-button id="teleport-button" disabled>Teleport</mdui-button>
-                <mdui-button id="copy-button">Copy URL</mdui-button>
-            </div>
-
+    <mdui-dialog id="coordinate-dialog" close-on-overlay-click> 
+      <mdui-top-app-bar slot="header" id="mobile-header">
+        <mdui-button-icon icon="close" id="close"></mdui-button-icon>
+      </mdui-top-app-bar>
+      <div>
+        <div class="input-group tile-inputs">
+            <mdui-text-field variant="outlined" 
+                id="tile-x" 
+                label="Tile X" 
+                
+                value="0"
+                min="0">
+            </mdui-text-field>
+            <mdui-text-field variant="outlined" 
+                id="tile-y" 
+                label="Tile Y" 
+                
+                value="0"
+                min="0">
+            </mdui-text-field>
+            <mdui-text-field variant="outlined" 
+                id="pixel-x" 
+                label="Pixel X" 
+                
+                value="0"
+                min="0">
+            </mdui-text-field>
+            <mdui-text-field variant="outlined" 
+                id="pixel-y" 
+                label="Pixel Y" 
+                
+                value="0"
+                min="0">
+            </mdui-text-field>
         </div>
+
+        <div class="divider"></div>
+
+        <div class="input-group coord-inputs">
+            <mdui-text-field variant="outlined" 
+                id="latitude" 
+                label="Latitude" 
+                
+                value="0">
+            </mdui-text-field>
+            <mdui-text-field variant="outlined" 
+                id="longitude" 
+                label="Longitude" 
+                
+                value="0">
+            </mdui-text-field>
+        </div>
+        <div class="visible-on-iframe">
+          <mdui-button-icon icon="location_on" id="get_last_selected_location"></mdui-button-icon>
+        </div>
+
+      </div>
+      <mdui-button slot="action" id="teleport-button" disabled>Teleport</mdui-button>
+      <mdui-button slot="action" id="copy-button">Copy URL</mdui-button>
+
     </mdui-dialog>
 
     <script src="mercator_util.js"></script>
     <script>
+        const targetOrigin = "https://wplace.live"
+
         const dialog = document.getElementById('coordinate-dialog');
         const openButton = document.getElementById('open-dialog-button');
         const teleportButton = document.getElementById('teleport-button');
+
+        // The copy button will get the text content of "code#balls", deletes all /\n */ and copy the text with the "javascript:" prefix
+        document.getElementById("copy-j").addEventListener("click", ()=>{
+          const code = document.getElementById("balls").textContent.replace(/\n\s*/g, "");
+          const finalCode = "javascript:" + code;
+          navigator.clipboard.writeText(finalCode).then(()=>{
+            //alert("Code copied to clipboard!");
+            document.getElementById("copy-text").open = true;
+          }).catch((err)=>{
+            alert("Failed to copy code: " + err);
+          });
+        });
 
         const mercator = new WebMercatorProjection(1000);
 
@@ -137,6 +163,34 @@
             latitude: document.getElementById('latitude'),
             longitude: document.getElementById('longitude')
         };
+
+        // Fullscreen the dialog if it hits the mobile breakpoint
+        dialog.fullscreen = mdui.breakpoint().down("md")
+        
+        // 
+        if (mdui.breakpoint().up("sm")) {
+          // delete the header
+          document.getElementById("mobile-header").remove();
+        } else {
+          // bind click to the close button to close the dialog
+          document.getElementById("close").addEventListener("click", ()=>{
+            dialog.open = false;
+          })
+        }
+
+        document.getElementById("get_last_selected_location").onclick = ()=>{
+          function nerd(e) {
+            if (e.origin !== targetOrigin) return;
+            if (e.data.type="loc") {
+              inputs.latitude.value = e.data.lat;
+              inputs.longitude.value = e.data.lng;
+              window.removeEventListener("message", nerd);
+              convertCoords(true);
+            }
+          }
+          window.addEventListener("message", nerd)
+          parent.postMessage({type:"loc"}, targetOrigin)
+        }
 
         // Function to check if the page is running inside an iframe
         function isInIframe() {
@@ -150,10 +204,14 @@
         // Initialize button state
         teleportButton.disabled = !isInIframe();
 
-        if (teleportButton.disabled) {}
+        if (!teleportButton.disabled) {
+          Array.from(document.getElementsByClassName("vanish-on-iframe")).forEach(e=>e.remove());
+        } else {
+          Array.from(document.getElementsByClassName("visible-on-iframe")).forEach(e=>e.remove());
+        }
 
         // Conversion logic (simplified mock-up for demonstration)
-        function convertCoords() {
+        function convertCoords(_isCoordInput = undefined) {
           // Get current values as numbers (or 0 if empty/invalid)
           const tx = parseFloat(inputs.tileX.value) || 0;
           const ty = parseFloat(inputs.tileY.value) || 0;
@@ -166,7 +224,7 @@
 
           // Determine which set of inputs triggered the change
           const activeElement = document.activeElement;
-          const isCoordInput = activeElement === inputs.latitude || activeElement === inputs.longitude;
+          const isCoordInput = _isCoordInput !== undefined ? _isCoordInput : activeElement === inputs.latitude || activeElement === inputs.longitude;
 
           if (isCoordInput) {
             // Simple conversion logic: e.g., Lat/Lon to Tile/Pixel
@@ -199,13 +257,13 @@
 
           // This is where you would "do smth with it"
           console.log(`Teleporting to Latitude: ${latitudeValue}, Longitude: ${longitudeValue}`);
-          postMessage({
+          parent.postMessage({
             lat: latitudeValue,
             lng: longitudeValue
-          }, "https://wplace.live")
+          }, targetOrigin)
           
           // Optionally close the dialog after action
-          dialog.close();
+          dialog.open = false;
         });
 
         document.getElementById("copy-button").addEventListener("click", ()=>{
@@ -221,16 +279,19 @@
         });        
 
         window.addEventListener("message", (e)=>{
-          if (e.origin !== "https://wplace.live") return;
-          // check if body.spawn is true (or even exists) 
-          if (e.data.spawn) {
-            dialog.show();
+          if (e.origin !== targetOrigin) return;
+          if (e.data.type="spawn") {
+            dialog.open = true;
           }
+        })
+
+        dialog.addEventListener("closed", ()=>{
+          parent.postMessage({type:"close"}, targetOrigin)
         })
 
         // Open dialog button for demonstration
         openButton.addEventListener('click', () => {
-            dialog.show();
+            dialog.open = true;
         });
     </script>
 </body>
