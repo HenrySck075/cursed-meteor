@@ -9,15 +9,13 @@
     <script type="importmap">
       {
         "imports": {
-          "@material/web/": "https://esm.run/@material/web/"
+          "mdui/": "https://esm.run/mdui@2.1.4/"
         }
       }
     </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mdui@2.1.4/mdui.min.css">
     <script type="module">
-      import '@material/web/all.js';
-      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
-
-      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+      import 'mdui/mdui.js';
     </script>
     <style>
         .input-group {
@@ -26,7 +24,7 @@
             margin-bottom: 16px;
         }
 
-        .input-group.tile-inputs md-outlined-text-field {
+        .input-group.tile-inputs mdui-outlined-text-field {
             flex: 1 1 25%; /* Four inputs, flexible width */
         }
         
@@ -36,13 +34,13 @@
             max-width: 100%;
         }
 
-        .input-group.coord-inputs md-outlined-text-field {
+        .input-group.coord-inputs mdui-outlined-text-field {
             flex: 1 1 50%; /* Two inputs, flexible width */
         }
 
         .divider {
             height: 1px;
-            background-color: var(--md-sys-color-outline-variant, #c2c7c5);
+            background-color: var(--mdui-sys-color-outline-variant, #c2c7c5);
             margin: 20px 0;
         }
 
@@ -58,72 +56,78 @@
     </style>
 </head>
 <body>
+    <mdui-snackbar id="copy-text">Copied to clipboard</mdui-snackbar>
+    <div id="vanish-on-iframe">    
+      <mdui-button id="open-dialog-button">Open Coordinate Dialog</mdui-button>
+    </div>
 
-    <md-filled-button id="open-dialog-button">Open Coordinate Dialog</md-filled-button>
-
-    <md-dialog id="coordinate-dialog">
+    <mdui-dialog id="coordinate-dialog">
         <div slot="headline">Coordinate Converter</div>
         
         <div slot="content">
             <div class="input-group tile-inputs">
-                <md-outlined-text-field 
+                <mdui-text-field variant="outlined" 
                     id="tile-x" 
                     label="Tile X" 
                     type="number" 
                     value="0"
                     min="0">
-                </md-outlined-text-field>
-                <md-outlined-text-field 
+                </mdui-outlined-text-field>
+                <mdui-text-field variant="outlined" 
                     id="tile-y" 
                     label="Tile Y" 
                     type="number" 
                     value="0"
                     min="0">
-                </md-outlined-text-field>
-                <md-outlined-text-field 
+                </mdui-outlined-text-field>
+                <mdui-text-field variant="outlined" 
                     id="pixel-x" 
                     label="Pixel X" 
                     type="number" 
                     value="0"
                     min="0">
-                </md-outlined-text-field>
-                <md-outlined-text-field 
+                </mdui-outlined-text-field>
+                <mdui-text-field variant="outlined" 
                     id="pixel-y" 
                     label="Pixel Y" 
                     type="number" 
                     value="0"
                     min="0">
-                </md-outlined-text-field>
+                </mdui-outlined-text-field>
             </div>
 
             <div class="divider"></div>
 
             <div class="input-group coord-inputs">
-                <md-outlined-text-field 
+                <mdui-text-field variant="outlined" 
                     id="latitude" 
                     label="Latitude" 
                     type="number" 
                     value="0">
-                </md-outlined-text-field>
-                <md-outlined-text-field 
+                </mdui-outlined-text-field>
+                <mdui-text-field variant="outlined" 
                     id="longitude" 
                     label="Longitude" 
                     type="number" 
                     value="0">
-                </md-outlined-text-field>
+                </mdui-outlined-text-field>
             </div>
 
             <div class="button-container" slot="actions">
-                <md-filled-button id="teleport-button" disabled>Teleport</md-filled-button>
+                <mdui-button id="teleport-button" disabled>Teleport</mdui-button>
+                <mdui-button id="copy-button">Copy URL</mdui-button>
             </div>
 
         </div>
-    </md-dialog>
+    </mdui-dialog>
 
+    <script src="mercator_util.js"></script>
     <script>
         const dialog = document.getElementById('coordinate-dialog');
         const openButton = document.getElementById('open-dialog-button');
         const teleportButton = document.getElementById('teleport-button');
+
+        const mercator = new WebMercatorProjection(1000);
 
         const inputs = {
             tileX: document.getElementById('tile-x'),
@@ -137,7 +141,7 @@
         // Function to check if the page is running inside an iframe
         function isInIframe() {
             try {
-                return window.self !== window.top;
+                return window.self !== window.top && window.top.location.href.includes("wplace.live");
             } catch (e) {
                 return true; // Assume in iframe if cross-origin access fails
             }
@@ -146,62 +150,83 @@
         // Initialize button state
         teleportButton.disabled = !isInIframe();
 
+        if (teleportButton.disabled) {}
+
         // Conversion logic (simplified mock-up for demonstration)
         function convertCoords() {
-            // Get current values as numbers (or 0 if empty/invalid)
-            const tx = parseFloat(inputs.tileX.value) || 0;
-            const ty = parseFloat(inputs.tileY.value) || 0;
-            const px = parseFloat(inputs.pixelX.value) || 0;
-            const py = parseFloat(inputs.pixelY.value) || 0;
-            const lat = parseFloat(inputs.latitude.value) || 0;
-            const lon = parseFloat(inputs.longitude.value) || 0;
+          // Get current values as numbers (or 0 if empty/invalid)
+          const tx = parseFloat(inputs.tileX.value) || 0;
+          const ty = parseFloat(inputs.tileY.value) || 0;
+          const px = parseFloat(inputs.pixelX.value) || 0;
+          const py = parseFloat(inputs.pixelY.value) || 0;
+          const lat = parseFloat(inputs.latitude.value) || 0;
+          const lon = parseFloat(inputs.longitude.value) || 0;
 
-            // Simple conversion logic: e.g., Tile/Pixel to Lat/Lon
-            // NOTE: Replace this with your actual conversion formula
-            const newLat = (tx + px / 256) * 10 - 50; 
-            const newLon = (ty + py / 256) * 20 + 10;
-            
+          const zoom = 11;
+
+          // Determine which set of inputs triggered the change
+          const activeElement = document.activeElement;
+          const isCoordInput = activeElement === inputs.latitude || activeElement === inputs.longitude;
+
+          if (isCoordInput) {
             // Simple conversion logic: e.g., Lat/Lon to Tile/Pixel
-            // NOTE: Replace this with your actual reverse conversion formula
-            const newTileX = Math.floor((lat + 50) / 10);
-            const newPixelX = Math.round(((lat + 50) / 10 - newTileX) * 256);
-            
-            // Determine which set of inputs triggered the change
-            const activeElement = document.activeElement;
-            const isCoordInput = activeElement === inputs.latitude || activeElement === inputs.longitude;
-
-            if (isCoordInput) {
-                // Update Tile/Pixel inputs based on Lat/Lon
-                inputs.tileX.value = newTileX.toFixed(0);
-                inputs.tileY.value = newTileX.toFixed(0); // Placeholder
-                inputs.pixelX.value = newPixelX.toFixed(0);
-                inputs.pixelY.value = newPixelX.toFixed(0); // Placeholder
-            } else {
-                // Update Lat/Lon inputs based on Tile/Pixel
-                inputs.latitude.value = newLat.toFixed(4);
-                inputs.longitude.value = newLon.toFixed(4);
-            }
+            const {tile: newTile, pixel: newPixel} = mercator.latLonToTileAndPixel(lat, lon, zoom);
+            // Update Tile/Pixel inputs based on Lat/Lon
+            inputs.tileX.value = newTile[0].toFixed(0);
+            inputs.tileY.value = newTile[1].toFixed(0);
+            inputs.pixelX.value = newPixel[0].toFixed(0);
+            inputs.pixelY.value = newPixel[1].toFixed(0);
+          } else {
+            // Simple conversion logic: e.g., Tile/Pixel to Lat/Lon
+            const [newLat, newLon] = mercator.pixelsToLatLon(px+tx*1000, py+ty*1000, zoom);
+            // Update Lat/Lon inputs based on Tile/Pixel
+            inputs.latitude.value = newLat;
+            inputs.longitude.value = newLon;
+          }
         }
 
         // Add event listeners to all numerical inputs for live conversion
         Object.values(inputs).forEach(input => {
-            input.addEventListener('input', convertCoords);
-            // Initialize with default values (which are "0" as per the HTML)
-            convertCoords();
+          input.addEventListener('input', convertCoords);
+          // Initialize with default values (which are "0" as per the HTML)
+          convertCoords();
         });
 
         // Teleport button click logic
         teleportButton.addEventListener('click', () => {
-            const latitudeValue = parseFloat(inputs.latitude.value);
-            const longitudeValue = parseFloat(inputs.longitude.value);
+          const latitudeValue = parseFloat(inputs.latitude.value);
+          const longitudeValue = parseFloat(inputs.longitude.value);
 
-            // This is where you would "do smth with it"
-            console.log(`Teleporting to Latitude: ${latitudeValue}, Longitude: ${longitudeValue}`);
-            alert(`Teleport clicked! Lat: ${latitudeValue.toFixed(4)}, Lon: ${longitudeValue.toFixed(4)}`);
-            
-            // Optionally close the dialog after action
-            dialog.close();
+          // This is where you would "do smth with it"
+          console.log(`Teleporting to Latitude: ${latitudeValue}, Longitude: ${longitudeValue}`);
+          postMessage({
+            lat: latitudeValue,
+            lng: longitudeValue
+          }, "https://wplace.live")
+          
+          // Optionally close the dialog after action
+          dialog.close();
         });
+
+        document.getElementById("copy-button").addEventListener("click", ()=>{
+          const latitudeValue = parseFloat(inputs.latitude.value);
+          const longitudeValue = parseFloat(inputs.longitude.value);
+          const url = `https://wplace.live/?lat=${latitudeValue}&lng=${longitudeValue}`;
+          navigator.clipboard.writeText(url).then(()=>{
+            //alert("URL copied to clipboard!");
+            document.getElementById("copy-text").open = true;
+          }).catch((err)=>{
+            alert("Failed to copy URL: " + err);
+          });
+        });        
+
+        window.addEventListener("message", (e)=>{
+          if (e.origin !== "https://wplace.live") return;
+          // check if body.spawn is true (or even exists) 
+          if (e.data.spawn) {
+            dialog.show();
+          }
+        })
 
         // Open dialog button for demonstration
         openButton.addEventListener('click', () => {
